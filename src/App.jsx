@@ -171,14 +171,15 @@ const ACTIVITY_LIBRARY = [
 ];
 
 // ── Week Shell (days with no fixed activity) ──
+// March 30, 2026 = Monday
 const WEEK_DAYS = [
-  { day: "MON", date: 24 },
-  { day: "TUE", date: 25 },
-  { day: "WED", date: 26 },
-  { day: "THU", date: 27 },
-  { day: "FRI", date: 28 },
-  { day: "SAT", date: 29 },
-  { day: "SUN", date: 30 },
+  { day: "MON", date: 30, month: "MAR" },
+  { day: "TUE", date: 31, month: "MAR" },
+  { day: "WED", date: 1, month: "APR" },
+  { day: "THU", date: 2, month: "APR" },
+  { day: "FRI", date: 3, month: "APR" },
+  { day: "SAT", date: 4, month: "APR" },
+  { day: "SUN", date: 5, month: "APR" },
 ];
 
 // Default suggestion (can be overridden)
@@ -194,7 +195,7 @@ const DEFAULT_SCHEDULE = {
 
 // ── Program Meta ──
 const PROGRAM = {
-  week: 3,
+  week: 1,
   totalWeeks: 12,
   phase: "Foundation",
   // days is now dynamically built from schedule state
@@ -208,17 +209,17 @@ const PROGRAM = {
         name: activity?.name || "—",
         type: activity?.type || "empty",
         duration: activity?.duration || 0,
-        status: d.day === "MON" ? "completed" : d.day === "TUE" ? "active" : "upcoming",
+        status: d.day === "MON" ? "active" : "upcoming",
         exercises: activity?.exercises || [],
         activityId: actId,
       };
     });
   },
-  macros: { calories: { current: 1247, target: 1900 }, protein: { current: 67, target: 145 }, carbs: { current: 89, target: 185 }, fat: { current: 23, target: 60 } },
+  macros: { calories: { current: 0, target: 1900 }, protein: { current: 0, target: 145 }, carbs: { current: 0, target: 185 }, fat: { current: 0, target: 60 } },
   meals: [
-    { time: "0700", label: "PRE-TRAINING FUEL", food: "Coffee + Skim Milk", kcal: 45, protein: 3, logged: true },
-    { time: "1000", label: "BREAKFAST", food: "Oats + Whey Protein Scoop", kcal: 380, protein: 36, logged: true },
-    { time: "1300", label: "LUNCH", food: "Paneer Tikka + Brown Rice + Moong Dal", kcal: 520, protein: 38, logged: true },
+    { time: "0700", label: "PRE-TRAINING FUEL", food: "Coffee + Skim Milk", kcal: 45, protein: 3, logged: false },
+    { time: "1000", label: "BREAKFAST", food: "Oats + Whey Protein Scoop", kcal: 380, protein: 36, logged: false },
+    { time: "1300", label: "LUNCH", food: "Paneer Tikka + Brown Rice + Moong Dal", kcal: 520, protein: 38, logged: false },
     { time: "1830", label: "POST-WORKOUT", food: "Whey Isolate + Creatine", kcal: 140, protein: 35, logged: false },
     { time: "2000", label: "DINNER", food: "Chickpea Curry + 2 Multigrain Roti", kcal: 410, protein: 22, logged: false },
   ]
@@ -262,20 +263,20 @@ const s = {
 // ── Icons (SVG inline) ──
 const Icon = ({ name, size = 20, color = T.muted }) => {
   const icons = {
-    home: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" /><path d="M9 21V12h6v9" /></svg>,
-    train: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5"><path d="M6 5v14M18 5v14M2 8h4M18 8h4M2 16h4M18 16h4M6 12h12" /></svg>,
-    fuel: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5"><path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z" /><path d="M6 1v3M10 1v3M14 1v3" /></svg>,
-    intel: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5"><path d="M18 20V10M12 20V4M6 20v-6" /></svg>,
-    profile: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5"><circle cx="12" cy="7" r="4" /><path d="M5.5 21a6.5 6.5 0 0113 0" /></svg>,
-    play: <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none"><path d="M8 5v14l11-7z" /></svg>,
-    check: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><path d="M20 6L9 17l-5-5" /></svg>,
-    bolt: <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>,
-    timer: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5"><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2 2M10 2h4" /></svg>,
-    alert: <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none"><path d="M12 2L1 21h22L12 2zm0 7v5m0 3h.01" /></svg>,
-    back: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>,
-    close: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>,
-    plus: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>,
-    fire: <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none"><path d="M12 23c-4.97 0-9-3.58-9-8 0-3.07 2.31-6.64 4.5-9 .37-.4 1-.4 1.37 0C10.56 7.86 11 9.5 11 9.5s1.44-2.14 3-4c.37-.44 1.06-.44 1.43 0C17.69 8.36 21 11.93 21 15c0 4.42-4.03 8-9 8z" /></svg>,
+    home: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>,
+    train: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5"><path d="M6 5v14M18 5v14M2 8h4M18 8h4M2 16h4M18 16h4M6 12h12"/></svg>,
+    fuel: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5"><path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><path d="M6 1v3M10 1v3M14 1v3"/></svg>,
+    intel: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>,
+    profile: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0113 0"/></svg>,
+    play: <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none"><path d="M8 5v14l11-7z"/></svg>,
+    check: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><path d="M20 6L9 17l-5-5"/></svg>,
+    bolt: <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>,
+    timer: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M10 2h4"/></svg>,
+    alert: <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none"><path d="M12 2L1 21h22L12 2zm0 7v5m0 3h.01"/></svg>,
+    back: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>,
+    close: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>,
+    plus: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>,
+    fire: <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none"><path d="M12 23c-4.97 0-9-3.58-9-8 0-3.07 2.31-6.64 4.5-9 .37-.4 1-.4 1.37 0C10.56 7.86 11 9.5 11 9.5s1.44-2.14 3-4c.37-.44 1.06-.44 1.43 0C17.69 8.36 21 11.93 21 15c0 4.42-4.03 8-9 8z"/></svg>,
   };
   return icons[name] || null;
 };
@@ -287,8 +288,8 @@ const ProgressRing = ({ pct, size = 80, stroke = 4, color = T.copper }) => {
   const offset = circ - (pct / 100) * circ;
   return (
     <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={T.cardHigh} strokeWidth={stroke} />
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="butt" style={{ transition: "stroke-dashoffset 0.8s ease" }} />
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={T.cardHigh} strokeWidth={stroke} />
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="butt" style={{ transition: "stroke-dashoffset 0.8s ease" }} />
     </svg>
   );
 };
@@ -313,7 +314,7 @@ const MacroBar = ({ label, current, target, color, showWarning }) => (
 // SCREEN: COMMAND (Home Dashboard)
 // ═══════════════════════════════════
 const CommandScreen = ({ onStartWorkout, onNavigate }) => {
-  const todayActivity = ACTIVITY_LIBRARY.find(a => a.id === DEFAULT_SCHEDULE["TUE"]);
+  const todayActivity = ACTIVITY_LIBRARY.find(a => a.id === DEFAULT_SCHEDULE["MON"]);
   const phasePct = Math.round((PROGRAM.week / PROGRAM.totalWeeks) * 100);
   const { macros } = PROGRAM;
 
@@ -380,7 +381,9 @@ const CommandScreen = ({ onStartWorkout, onNavigate }) => {
             </div>
             <div style={{ textAlign: "right" }}>
               <p style={{ ...s.label, fontSize: 9 }}>METABOLIC EFFICIENCY</p>
-              <p style={{ fontFamily: font.head, fontSize: 16, color: T.copper, fontWeight: 700, marginTop: 4 }}>HIGH</p>
+              <p style={{ fontFamily: font.head, fontSize: 16, color: macros.calories.current === 0 ? T.muted : T.copper, fontWeight: 700, marginTop: 4 }}>
+                {macros.calories.current === 0 ? "AWAITING DATA" : macros.calories.current >= macros.calories.target * 0.8 ? "ON TRACK" : "LOG MEALS"}
+              </p>
             </div>
           </div>
           <MacroBar label="PROTEIN" current={macros.protein.current} target={macros.protein.target} color={T.proteinRed} showWarning={macros.protein.current < macros.protein.target * 0.5} />
@@ -395,7 +398,7 @@ const CommandScreen = ({ onStartWorkout, onNavigate }) => {
           <p style={{ ...s.label, marginBottom: 12 }}>TODAY'S PROTOCOL</p>
           <div style={{ ...s.cardHighlight, display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} onClick={onStartWorkout}>
             <div>
-              <h2 style={s.h2}>{todayActivity.label} — Tuesday</h2>
+              <h2 style={s.h2}>{todayActivity.label} — Monday</h2>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8 }}>
                 <span style={{ ...s.body, fontSize: 12 }}>{todayActivity.exercises.length} exercises</span>
                 <span style={{ ...s.body, fontSize: 12 }}>{todayActivity.duration} min</span>
@@ -416,11 +419,11 @@ const CommandScreen = ({ onStartWorkout, onNavigate }) => {
 // SCREEN: ACTIVE WORKOUT
 // ═══════════════════════════════════
 const WorkoutScreen = ({ onBack }) => {
-  const todayActivity = ACTIVITY_LIBRARY.find(a => a.id === DEFAULT_SCHEDULE["TUE"]);
+  const todayActivity = ACTIVITY_LIBRARY.find(a => a.id === DEFAULT_SCHEDULE["MON"]);
   const exercises = todayActivity?.exercises || [];
-
+  
   const [currentExIdx, setCurrentExIdx] = useState(0);
-  const [sets, setSets] = useState(() =>
+  const [sets, setSets] = useState(() => 
     exercises.map(ex => Array.from({ length: ex.sets }, () => ({ weight: ex.weight, reps: parseInt(ex.reps) || 10, done: false })))
   );
   const [currentSet, setCurrentSet] = useState(0);
@@ -459,7 +462,7 @@ const WorkoutScreen = ({ onBack }) => {
 
   const adjustWeight = (delta) => {
     setSets(prev => {
-      const next = prev.map(a => a.map(s => ({ ...s })));
+      const next = prev.map(a => a.map(s => ({...s})));
       const curr = next[currentExIdx][currentSet];
       curr.weight = Math.max(0, curr.weight + delta);
       return next;
@@ -468,7 +471,7 @@ const WorkoutScreen = ({ onBack }) => {
 
   const adjustReps = (delta) => {
     setSets(prev => {
-      const next = prev.map(a => a.map(s => ({ ...s })));
+      const next = prev.map(a => a.map(s => ({...s})));
       const curr = next[currentExIdx][currentSet];
       curr.reps = Math.max(0, curr.reps + delta);
       return next;
@@ -478,7 +481,7 @@ const WorkoutScreen = ({ onBack }) => {
   const completeSet = () => {
     const exRest = currentEx?.rest || 60;
     setSets(prev => {
-      const next = prev.map(a => a.map(s => ({ ...s })));
+      const next = prev.map(a => a.map(s => ({...s})));
       next[currentExIdx][currentSet].done = true;
       return next;
     });
@@ -548,8 +551,8 @@ const WorkoutScreen = ({ onBack }) => {
           const isActive = i === currentSet && !set.done;
           const isDone = set.done;
           return (
-            <div key={i} style={{
-              ...s.card,
+            <div key={i} style={{ 
+              ...s.card, 
               opacity: isDone ? 0.5 : (isActive ? 1 : 0.6),
               borderLeft: isActive ? `3px solid ${T.teal}` : "none",
               marginBottom: 8,
@@ -557,7 +560,7 @@ const WorkoutScreen = ({ onBack }) => {
             }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <p style={{ ...s.label, fontSize: 10 }}>
-                  {isDone ? `SET_0${i + 1} // COMPLETED` : isActive ? `SET_0${i + 1} — ACTIVE` : `SET_0${i + 1} // QUEUED`}
+                  {isDone ? `SET_0${i+1} // COMPLETED` : isActive ? `SET_0${i+1} — ACTIVE` : `SET_0${i+1} // QUEUED`}
                 </p>
                 {isDone && <Icon name="check" size={18} color={T.teal} />}
               </div>
@@ -612,7 +615,7 @@ const WorkoutScreen = ({ onBack }) => {
             <ProgressRing pct={(restTime / (currentEx?.rest || 60)) * 100} size={120} stroke={4} color={T.teal} />
             <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}>
               <p style={{ ...s.label, fontSize: 9 }}>RECOVERY</p>
-              <span style={{ fontFamily: font.head, fontSize: 36, color: T.teal, fontWeight: 700 }}>{restTime}<span style={{ fontSize: 16 }}>s</span></span>
+              <span style={{ fontFamily: font.head, fontSize: 36, color: T.teal, fontWeight: 700 }}>{restTime}<span style={{fontSize:16}}>s</span></span>
             </div>
           </div>
           <div style={{ marginTop: 12 }}>
@@ -834,7 +837,7 @@ const WeeklyScreen = ({ onStartWorkout }) => {
 
   const sportIcons = ["⚽", "🏀", "🏐", "🏓", "🥊", "🚴", "🏃", "🧗", "⛳", "🎯", "🏑", "🤸"];
 
-  const today = "TUE";
+  const today = "MON";
   const categories = [
     { id: "all", label: "ALL" },
     { id: "strength", label: "STRENGTH" },
@@ -844,8 +847,8 @@ const WeeklyScreen = ({ onStartWorkout }) => {
     { id: "performance", label: "PERFORMANCE" },
   ];
 
-  const filteredLibrary = filterCat === "all"
-    ? allActivities
+  const filteredLibrary = filterCat === "all" 
+    ? allActivities 
     : allActivities.filter(a => a.category === filterCat);
 
   // Count stats
@@ -867,7 +870,7 @@ const WeeklyScreen = ({ onStartWorkout }) => {
       {/* Header */}
       <div style={{ padding: "20px 20px 0" }}>
         <p style={s.label}>WEEKLY OPERATIONS</p>
-        <h1 style={{ ...s.h1, marginTop: 8 }}>Week {PROGRAM.week} — Mar 24-30</h1>
+        <h1 style={{ ...s.h1, marginTop: 8 }}>Week {PROGRAM.week} — Mar 30 - Apr 5</h1>
         <div style={{ display: "flex", gap: 16, marginTop: 8 }}>
           <span style={{ ...s.body, fontSize: 12, color: T.teal }}>{gymDays} gym</span>
           <span style={{ ...s.body, fontSize: 12, color: "#D4944C" }}>{sportDays} sport</span>
@@ -901,13 +904,13 @@ const WeeklyScreen = ({ onStartWorkout }) => {
       <div style={{ padding: "0 20px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <p style={s.label}>YOUR SCHEDULE</p>
-          <button onClick={() => setSchedule({ ...DEFAULT_SCHEDULE })} style={{ ...s.btnSecondary, padding: "6px 12px", fontSize: 9 }}>RESET DEFAULT</button>
+          <button onClick={() => setSchedule({...DEFAULT_SCHEDULE})} style={{ ...s.btnSecondary, padding: "6px 12px", fontSize: 9 }}>RESET DEFAULT</button>
         </div>
 
         {WEEK_DAYS.map(d => {
           const act = getActivity(d.day);
           const isToday = d.day === today;
-          const isDone = d.day === "MON";
+          const isDone = false; // Nothing completed yet - will be dynamic later
           const isEmpty = !act;
           const typeColor = act?.type === "gym" ? T.teal : act?.type === "outdoor" ? "#D4944C" : act?.type === "rest" ? T.success : T.muted;
           const typeLabel = act?.type === "gym" ? "GYM SESSION" : act?.type === "outdoor" ? "OUTDOOR RECON" : act?.type === "rest" ? "RECOVERY" : "";
@@ -921,7 +924,7 @@ const WeeklyScreen = ({ onStartWorkout }) => {
               <div style={{ padding: "16px 20px" }}>
                 {/* Top row: day label + status badges */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <p style={s.label}>{d.day}DAY — {d.date} MAR</p>
+                  <p style={s.label}>{d.day}DAY — {d.date} {d.month}</p>
                   <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                     {isDone && <span style={{ fontFamily: font.head, fontSize: 9, color: T.teal, letterSpacing: "0.1em" }}>✓ DONE</span>}
                     {isToday && <span style={{ fontFamily: font.head, fontSize: 9, color: T.copper, letterSpacing: "0.1em", background: `${T.copper}20`, padding: "2px 8px" }}>TODAY</span>}
@@ -1077,17 +1080,17 @@ const WeeklyScreen = ({ onStartWorkout }) => {
               ) : (
                 <div style={{ background: T.card, padding: 20, marginBottom: 8, borderLeft: `3px solid #D4944C` }}>
                   <p style={{ ...s.labelCopper, marginBottom: 12 }}>CREATE CUSTOM SPORT</p>
-
+                  
                   {/* Sport Name */}
                   <div style={{ marginBottom: 12 }}>
                     <p style={{ ...s.label, fontSize: 9, marginBottom: 6 }}>SPORT NAME</p>
-                    <input
-                      type="text"
-                      value={newSport.name}
-                      onChange={(e) => setNewSport(prev => ({ ...prev, name: e.target.value }))}
+                    <input 
+                      type="text" 
+                      value={newSport.name} 
+                      onChange={(e) => setNewSport(prev => ({...prev, name: e.target.value}))}
                       placeholder="e.g. Cricket, Volleyball, Hiking..."
-                      style={{
-                        width: "100%", background: T.cardHigh, border: `1px solid ${T.label}33`,
+                      style={{ 
+                        width: "100%", background: T.cardHigh, border: `1px solid ${T.label}33`, 
                         color: T.cream, fontFamily: font.body, fontSize: 14, padding: "10px 12px",
                         outline: "none", boxSizing: "border-box"
                       }}
@@ -1099,7 +1102,7 @@ const WeeklyScreen = ({ onStartWorkout }) => {
                     <p style={{ ...s.label, fontSize: 9, marginBottom: 6 }}>DURATION (MIN)</p>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       {[30, 45, 60, 90, 120].map(d => (
-                        <button key={d} onClick={() => setNewSport(prev => ({ ...prev, duration: d }))} style={{
+                        <button key={d} onClick={() => setNewSport(prev => ({...prev, duration: d}))} style={{
                           padding: "8px 12px", background: newSport.duration === d ? T.copper : T.cardHigh,
                           border: "none", color: newSport.duration === d ? T.surface : T.cream,
                           fontFamily: font.head, fontSize: 12, cursor: "pointer", fontWeight: 600
@@ -1113,7 +1116,7 @@ const WeeklyScreen = ({ onStartWorkout }) => {
                     <p style={{ ...s.label, fontSize: 9, marginBottom: 6 }}>ICON</p>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                       {sportIcons.map(icon => (
-                        <button key={icon} onClick={() => setNewSport(prev => ({ ...prev, icon }))} style={{
+                        <button key={icon} onClick={() => setNewSport(prev => ({...prev, icon}))} style={{
                           width: 40, height: 40, fontSize: 20,
                           background: newSport.icon === icon ? T.cardHigh : "transparent",
                           border: newSport.icon === icon ? `2px solid ${T.copper}` : `1px solid ${T.cardHigh}`,
@@ -1161,128 +1164,88 @@ const WeeklyScreen = ({ onStartWorkout }) => {
 // ── Meal Library with full macros, ingredients, recipes ──
 const MEAL_LIBRARY = {
   breakfast: [
-    {
-      id: "b1", name: "Oats + Whey Protein", kcal: 380, protein: 36, carbs: 48, fat: 6, prep: 5,
+    { id: "b1", name: "Oats + Whey Protein", kcal: 380, protein: 36, carbs: 48, fat: 6, prep: 5, 
       ingredients: ["50g rolled oats", "250ml skim milk", "1 scoop vanilla whey isolate", "5 almonds (chopped)"],
       steps: ["Cook oats with skim milk for 3-4 min", "Let cool 1 min", "Stir in whey protein scoop", "Top with chopped almonds"],
-      tags: ["quick", "high-protein", "meal-prep"]
-    },
-    {
-      id: "b2", name: "Spinach Ricotta Roll", kcal: 340, protein: 22, carbs: 32, fat: 14, prep: 15,
+      tags: ["quick", "high-protein", "meal-prep"] },
+    { id: "b2", name: "Spinach Ricotta Roll", kcal: 340, protein: 22, carbs: 32, fat: 14, prep: 15,
       ingredients: ["2 multigrain wraps", "100g ricotta cheese", "50g baby spinach", "Salt, pepper, chili flakes"],
       steps: ["Wilt spinach in a pan (1 min)", "Mix ricotta with salt, pepper, chili flakes", "Spread on wraps, add spinach", "Roll tight, slice in half"],
-      tags: ["friday-special"]
-    },
-    {
-      id: "b3", name: "Moong Dal Chilla (2 pcs)", kcal: 320, protein: 24, carbs: 36, fat: 10, prep: 20,
+      tags: ["friday-special"] },
+    { id: "b3", name: "Moong Dal Chilla (2 pcs)", kcal: 320, protein: 24, carbs: 36, fat: 10, prep: 20,
       ingredients: ["100g moong dal (soaked 4hrs)", "1 green chili", "1/4 onion (diced)", "Coriander, salt, turmeric"],
       steps: ["Blend soaked moong dal into smooth batter", "Add chili, onion, coriander, salt, turmeric", "Pour on hot non-stick pan like a crepe", "Cook both sides until golden, serve with mint chutney"],
-      tags: ["weekend", "high-protein"]
-    },
-    {
-      id: "b4", name: "Paneer Bhurji + 1 Roti", kcal: 410, protein: 28, carbs: 30, fat: 20, prep: 15,
+      tags: ["weekend", "high-protein"] },
+    { id: "b4", name: "Paneer Bhurji + 1 Roti", kcal: 410, protein: 28, carbs: 30, fat: 20, prep: 15,
       ingredients: ["100g paneer (crumbled)", "1 multigrain roti", "1/2 onion", "1 tomato", "Green chili, turmeric, cumin"],
       steps: ["Heat oil, add cumin seeds", "Sauté onion + tomato + chili until soft", "Add crumbled paneer, turmeric, salt", "Cook 3 min. Serve with roti"],
-      tags: ["weekend", "high-protein"]
-    },
-    {
-      id: "b5", name: "Egg White Omelette + Toast", kcal: 290, protein: 26, carbs: 28, fat: 8, prep: 10,
+      tags: ["weekend", "high-protein"] },
+    { id: "b5", name: "Egg White Omelette + Toast", kcal: 290, protein: 26, carbs: 28, fat: 8, prep: 10,
       ingredients: ["4 egg whites", "1 whole egg", "1/4 capsicum (diced)", "1 slice multigrain toast", "Salt, pepper"],
       steps: ["Whisk egg whites + 1 whole egg", "Add diced capsicum, salt, pepper", "Cook on non-stick pan both sides", "Serve with toast"],
-      tags: ["weekend", "eggs"]
-    },
+      tags: ["weekend", "eggs"] },
   ],
   lunch: [
-    {
-      id: "l1", name: "Soya Chunks Curry + Brown Rice", kcal: 530, protein: 38, carbs: 62, fat: 12, prep: 35,
+    { id: "l1", name: "Soya Chunks Curry + Brown Rice", kcal: 530, protein: 38, carbs: 62, fat: 12, prep: 35,
       ingredients: ["50g dry soya chunks", "150g cooked brown rice", "1/2 onion", "1 tomato", "Ginger-garlic paste, cumin, turmeric, garam masala, coriander"],
       steps: ["Soak soya chunks in hot water 10 min, squeeze dry", "Sauté onion, add ginger-garlic paste", "Add tomato, spices, cook 5 min", "Add soya chunks, 1/2 cup water, simmer 10 min", "Serve with brown rice"],
-      tags: ["meal-prep", "high-protein", "batch-cook"]
-    },
-    {
-      id: "l2", name: "Rajma Curry + Brown Rice", kcal: 510, protein: 28, carbs: 72, fat: 10, prep: 40,
+      tags: ["meal-prep", "high-protein", "batch-cook"] },
+    { id: "l2", name: "Rajma Curry + Brown Rice", kcal: 510, protein: 28, carbs: 72, fat: 10, prep: 40,
       ingredients: ["1 cup cooked rajma (kidney beans)", "150g cooked brown rice", "1/2 onion", "1 tomato", "Ginger-garlic, cumin, turmeric, garam masala, kasuri methi"],
       steps: ["Sauté onion till golden, add ginger-garlic", "Add tomato, spices, cook till thick", "Add rajma + 1 cup water, simmer 15 min", "Finish with kasuri methi, serve with rice"],
-      tags: ["meal-prep", "batch-cook"]
-    },
-    {
-      id: "l3", name: "Paneer Tikka + 2 Multigrain Roti + Dal", kcal: 560, protein: 36, carbs: 52, fat: 22, prep: 30,
+      tags: ["meal-prep", "batch-cook"] },
+    { id: "l3", name: "Paneer Tikka + 2 Multigrain Roti + Dal", kcal: 560, protein: 36, carbs: 52, fat: 22, prep: 30,
       ingredients: ["100g paneer (cubed)", "2 multigrain roti", "1/2 cup moong dal (cooked)", "Yogurt, tikka masala spice, lemon"],
       steps: ["Marinate paneer in yogurt + tikka spice 30 min", "Pan-fry or air-fry paneer until charred", "Cook moong dal with turmeric, cumin tadka", "Serve paneer + dal with roti"],
-      tags: ["meal-prep", "high-protein"]
-    },
-    {
-      id: "l4", name: "Chole (Chickpea Curry) + 2 Roti", kcal: 520, protein: 26, carbs: 68, fat: 14, prep: 35,
+      tags: ["meal-prep", "high-protein"] },
+    { id: "l4", name: "Chole (Chickpea Curry) + 2 Roti", kcal: 520, protein: 26, carbs: 68, fat: 14, prep: 35,
       ingredients: ["1 cup cooked chickpeas", "2 multigrain roti", "1/2 onion", "1 tomato", "Chole masala, ginger-garlic, amchur"],
       steps: ["Sauté onion, add ginger-garlic", "Add tomato + chole masala, cook 5 min", "Add chickpeas + water, simmer 15 min", "Finish with amchur and coriander"],
-      tags: ["meal-prep", "batch-cook"]
-    },
-    {
-      id: "l5", name: "Tofu Stir-Fry + Quinoa", kcal: 480, protein: 34, carbs: 48, fat: 16, prep: 25,
+      tags: ["meal-prep", "batch-cook"] },
+    { id: "l5", name: "Tofu Stir-Fry + Quinoa", kcal: 480, protein: 34, carbs: 48, fat: 16, prep: 25,
       ingredients: ["150g firm tofu (pressed, cubed)", "100g cooked quinoa", "1/2 capsicum", "1/2 broccoli head", "Soy sauce, sesame oil, ginger, garlic, chili"],
       steps: ["Press tofu 15 min, cube", "Stir-fry tofu in sesame oil until golden", "Add vegetables, ginger, garlic", "Add soy sauce, cook 3 min", "Serve over quinoa"],
-      tags: ["meal-prep", "high-protein"]
-    },
-    {
-      id: "l6", name: "Soya Palak (Soya + Spinach) + Rice", kcal: 490, protein: 35, carbs: 56, fat: 12, prep: 30,
+      tags: ["meal-prep", "high-protein"] },
+    { id: "l6", name: "Soya Palak (Soya + Spinach) + Rice", kcal: 490, protein: 35, carbs: 56, fat: 12, prep: 30,
       ingredients: ["50g dry soya chunks", "150g spinach (blanched, pureed)", "150g cooked brown rice", "1/2 onion, ginger-garlic, cumin, garam masala"],
       steps: ["Soak soya chunks, squeeze dry", "Blanch spinach, puree", "Sauté onion + ginger-garlic + spices", "Add soya + spinach puree, simmer 10 min", "Serve with rice"],
-      tags: ["meal-prep", "high-protein", "batch-cook"]
-    },
+      tags: ["meal-prep", "high-protein", "batch-cook"] },
   ],
   dinner: [
-    {
-      id: "d1", name: "Paneer Salad Bowl", kcal: 380, protein: 28, carbs: 18, fat: 22, prep: 10,
+    { id: "d1", name: "Paneer Salad Bowl", kcal: 380, protein: 28, carbs: 18, fat: 22, prep: 10,
       ingredients: ["100g paneer (cubed, pan-fried)", "Mixed greens (lettuce, cucumber, tomato)", "1/4 avocado", "Lemon-olive oil dressing, chaat masala"],
       steps: ["Pan-fry paneer cubes till golden", "Toss greens, cucumber, tomato in bowl", "Top with paneer + avocado", "Drizzle lemon-olive oil, sprinkle chaat masala"],
-      tags: ["quick", "light", "high-protein"]
-    },
-    {
-      id: "d2", name: "Moong Dal Soup + Cottage Cheese", kcal: 350, protein: 32, carbs: 30, fat: 10, prep: 15,
+      tags: ["quick", "light", "high-protein"] },
+    { id: "d2", name: "Moong Dal Soup + Cottage Cheese", kcal: 350, protein: 32, carbs: 30, fat: 10, prep: 15,
       ingredients: ["1/2 cup moong dal", "100g low-fat cottage cheese (paneer)", "Turmeric, cumin, ginger, lemon, coriander"],
       steps: ["Pressure cook moong dal with turmeric", "Prepare cumin-ginger tadka", "Add tadka to dal, squeeze lemon", "Serve with cubed paneer on the side"],
-      tags: ["quick", "light", "high-protein"]
-    },
-    {
-      id: "d3", name: "Egg White + Veggie Stir-Fry", kcal: 310, protein: 30, carbs: 16, fat: 14, prep: 12,
+      tags: ["quick", "light", "high-protein"] },
+    { id: "d3", name: "Egg White + Veggie Stir-Fry", kcal: 310, protein: 30, carbs: 16, fat: 14, prep: 12,
       ingredients: ["5 egg whites + 1 whole egg", "1/2 capsicum", "Mushrooms (50g)", "Onion, spinach, soy sauce"],
       steps: ["Scramble egg whites + 1 egg in pan", "Push aside, stir-fry veggies with soy sauce", "Combine and serve"],
-      tags: ["quick", "light", "eggs"]
-    },
-    {
-      id: "d4", name: "Greek Yogurt Bowl + Nuts", kcal: 320, protein: 26, carbs: 28, fat: 12, prep: 5,
+      tags: ["quick", "light", "eggs"] },
+    { id: "d4", name: "Greek Yogurt Bowl + Nuts", kcal: 320, protein: 26, carbs: 28, fat: 12, prep: 5,
       ingredients: ["200g Greek yogurt (low-fat)", "10g peanut butter", "1 tbsp honey", "10 almonds (chopped)", "Cinnamon"],
       steps: ["Scoop yogurt into bowl", "Drizzle peanut butter + honey", "Top with almonds + cinnamon", "Mix and eat"],
-      tags: ["quick", "no-cook", "light"]
-    },
-    {
-      id: "d5", name: "Soya Keema + 1 Roti", kcal: 390, protein: 32, carbs: 36, fat: 12, prep: 18,
+      tags: ["quick", "no-cook", "light"] },
+    { id: "d5", name: "Soya Keema + 1 Roti", kcal: 390, protein: 32, carbs: 36, fat: 12, prep: 18,
       ingredients: ["50g soya granules (fine)", "1 multigrain roti", "1/2 onion", "1 tomato", "Peas (30g), ginger-garlic, cumin, garam masala"],
       steps: ["Soak soya granules 5 min, squeeze dry", "Sauté onion + ginger-garlic", "Add tomato + spices + peas, cook 5 min", "Add soya, cook 5 min more", "Serve with roti"],
-      tags: ["quick", "high-protein"]
-    },
-    {
-      id: "d6", name: "Chickpea Salad + Curd", kcal: 360, protein: 24, carbs: 38, fat: 12, prep: 8,
+      tags: ["quick", "high-protein"] },
+    { id: "d6", name: "Chickpea Salad + Curd", kcal: 360, protein: 24, carbs: 38, fat: 12, prep: 8,
       ingredients: ["1 cup boiled chickpeas", "150g curd", "Cucumber, onion, tomato", "Chaat masala, lemon, coriander"],
       steps: ["Mix chickpeas with diced cucumber, onion, tomato", "Add chaat masala + lemon + coriander", "Serve with curd on the side"],
-      tags: ["quick", "no-cook", "light"]
-    },
-    {
-      id: "d7", name: "Paneer Wrap (High Protein)", kcal: 420, protein: 30, carbs: 32, fat: 18, prep: 12,
+      tags: ["quick", "no-cook", "light"] },
+    { id: "d7", name: "Paneer Wrap (High Protein)", kcal: 420, protein: 30, carbs: 32, fat: 18, prep: 12,
       ingredients: ["80g paneer (sliced)", "1 multigrain wrap", "Mixed greens", "Mint chutney, onion rings"],
       steps: ["Pan-fry paneer slices", "Warm wrap on pan", "Layer mint chutney, greens, paneer, onion", "Roll tight and slice"],
-      tags: ["quick", "high-protein"]
-    },
+      tags: ["quick", "high-protein"] },
   ],
   fixed: [
-    {
-      id: "f1", name: "Coffee + Skim Milk", kcal: 45, protein: 3, carbs: 5, fat: 1, prep: 2, slot: "pre-fuel",
-      ingredients: ["1 cup coffee", "100ml skim milk", "No sugar"], steps: ["Brew coffee, add skim milk"], tags: ["daily"]
-    },
-    {
-      id: "f2", name: "Whey Isolate + Creatine", kcal: 140, protein: 35, carbs: 3, fat: 1, prep: 2, slot: "post-workout",
-      ingredients: ["1 scoop whey isolate", "1 scoop creatine", "300ml water"], steps: ["Mix in shaker with water"], tags: ["daily"]
-    },
+    { id: "f1", name: "Coffee + Skim Milk", kcal: 45, protein: 3, carbs: 5, fat: 1, prep: 2, slot: "pre-fuel",
+      ingredients: ["1 cup coffee", "100ml skim milk", "No sugar"], steps: ["Brew coffee, add skim milk"], tags: ["daily"] },
+    { id: "f2", name: "Whey Isolate + Creatine", kcal: 140, protein: 35, carbs: 3, fat: 1, prep: 2, slot: "post-workout",
+      ingredients: ["1 scoop whey isolate", "1 scoop creatine", "300ml water"], steps: ["Mix in shaker with water"], tags: ["daily"] },
   ],
   snacks: [
     { id: "s1", name: "Roasted Chana (50g)", kcal: 180, protein: 10, carbs: 24, fat: 4, prep: 0, tags: ["no-cook"] },
@@ -1312,10 +1275,10 @@ const findMeal = (id) => {
 const FuelScreen = () => {
   const [fuelTab, setFuelTab] = useState("today");
   const [mealPlan, setMealPlan] = useState({ ...DEFAULT_MEAL_PLAN });
-  const [logged, setLogged] = useState({ coffee: true, breakfast: true, lunch: true, postworkout: false, dinner: false, snack: false });
+  const [logged, setLogged] = useState({ coffee: false, breakfast: false, lunch: false, postworkout: false, dinner: false, snack: false });
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [swapSlot, setSwapSlot] = useState(null); // {day, slot}
-  const today = "TUE";
+  const today = "MON";
   const todayPlan = mealPlan[today];
 
   const fixedMeals = MEAL_LIBRARY.fixed;
@@ -1461,7 +1424,7 @@ const FuelScreen = () => {
         <div style={{ padding: "16px 20px 0" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <p style={s.label}>WEEKLY FUEL MAP</p>
-            <button onClick={() => setMealPlan({ ...DEFAULT_MEAL_PLAN })} style={{ ...s.btnSecondary, padding: "4px 10px", fontSize: 9 }}>RESET</button>
+            <button onClick={() => setMealPlan({...DEFAULT_MEAL_PLAN})} style={{ ...s.btnSecondary, padding: "4px 10px", fontSize: 9 }}>RESET</button>
           </div>
           {Object.entries(mealPlan).map(([day, plan]) => {
             const bk = findMeal(plan.breakfast);
@@ -1629,7 +1592,7 @@ const FuelScreen = () => {
 // ═══════════════════════════════════
 const IntelScreen = () => {
   const [tab, setTab] = useState("body");
-  const weights = [78, 77.8, 77.5, 77.2, 76.9, 76.8, 76.5, 76.2];
+  const weights = [78]; // Starting weight - will grow as you log weekly weigh-ins
   const maxW = Math.max(...weights);
   const minW = Math.min(...weights);
   const range = maxW - minW || 1;
@@ -1657,7 +1620,9 @@ const IntelScreen = () => {
             <p style={s.label}>BIOMETRIC FEED: WEIGHT</p>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 8 }}>
               <span style={{ fontFamily: font.head, fontSize: 42, fontWeight: 700, color: T.cream }}>{weights[weights.length - 1]}<span style={{ fontSize: 16, color: T.muted }}>KG</span></span>
-              <span style={{ fontFamily: font.head, fontSize: 13, color: T.teal }}>-{(weights[0] - weights[weights.length - 1]).toFixed(1)}KG Δ</span>
+              <span style={{ fontFamily: font.head, fontSize: 13, color: T.teal }}>
+                {weights.length > 1 ? `-${(weights[0] - weights[weights.length - 1]).toFixed(1)}KG Δ` : "BASELINE"}
+              </span>
             </div>
             {/* Simple Chart */}
             <svg width="100%" height="100" viewBox="0 0 380 100" style={{ marginTop: 16 }}>
@@ -1666,7 +1631,7 @@ const IntelScreen = () => {
                 const x = (i / (weights.length - 1)) * 360 + 10;
                 const y = 90 - ((w - minW) / range) * 70;
                 return i > 0 ? (
-                  <line key={i} x1={(((i - 1) / (weights.length - 1)) * 360 + 10)} y1={90 - ((weights[i - 1] - minW) / range) * 70} x2={x} y2={y} stroke={T.teal} strokeWidth="2" />
+                  <line key={i} x1={(((i-1) / (weights.length - 1)) * 360 + 10)} y1={90 - ((weights[i-1] - minW) / range) * 70} x2={x} y2={y} stroke={T.teal} strokeWidth="2" />
                 ) : null;
               })}
               {weights.map((w, i) => {
@@ -1676,7 +1641,7 @@ const IntelScreen = () => {
               })}
             </svg>
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
-              {weights.map((_, i) => <span key={i} style={{ ...s.label, fontSize: 8 }}>WK {String(i + 1).padStart(2, "0")}</span>)}
+              {weights.map((_, i) => <span key={i} style={{ ...s.label, fontSize: 8 }}>WK {String(i+1).padStart(2, "0")}</span>)}
             </div>
           </div>
 
@@ -1689,7 +1654,7 @@ const IntelScreen = () => {
             </div>
             <div style={{ ...s.card, flex: 1 }}>
               <p style={{ ...s.label, fontSize: 9 }}>LEAN MASS</p>
-              <span style={{ fontFamily: font.head, fontSize: 24, fontWeight: 700, color: T.cream }}>56.5<span style={{ fontSize: 12 }}>KG</span></span>
+              <span style={{ fontFamily: font.head, fontSize: 24, fontWeight: 700, color: T.cream }}>56.5<span style={{fontSize:12}}>KG</span></span>
               <span style={{ fontFamily: font.head, fontSize: 11, color: T.teal }}> →STABLE</span>
             </div>
           </div>
@@ -1698,8 +1663,8 @@ const IntelScreen = () => {
           <div style={{ background: T.copper, padding: 20, marginTop: 0 }}>
             <p style={{ fontFamily: font.head, fontSize: 11, letterSpacing: "0.12em", color: T.surface }}>NEXT EVOLT SCAN SEQUENCE</p>
             <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 8 }}>
-              <span style={{ fontFamily: font.head, fontSize: 42, fontWeight: 700, color: T.surface }}>42</span>
-              <span style={{ fontFamily: font.head, fontSize: 16, color: T.surface }}>DAYS — APRIL 28</span>
+              <span style={{ fontFamily: font.head, fontSize: 42, fontWeight: 700, color: T.surface }}>84</span>
+              <span style={{ fontFamily: font.head, fontSize: 16, color: T.surface }}>DAYS — JUNE 22</span>
             </div>
           </div>
         </div>
@@ -1709,23 +1674,24 @@ const IntelScreen = () => {
         <div style={{ padding: "20px 20px 0" }}>
           <p style={{ ...s.label, marginBottom: 16 }}>LEGS & RECON DATASET</p>
           {[
-            { label: "SINGLE-LEG HOLD", data: "R: 15s → 28s   L: 22s → 35s" },
-            { label: "BOX JUMP HEIGHT", data: "20cm → 35cm" },
-            { label: "AGILITY LADDER TIME", data: "45s → 32s" },
+            { label: "SINGLE-LEG HOLD", data: "R: 10s   L: 15s", note: "Baseline — right leg weaker as expected" },
+            { label: "BOX JUMP HEIGHT", data: "Not tested yet", note: "Phase 1: Landing drills first" },
+            { label: "AGILITY LADDER TIME", data: "Not tested yet", note: "Start agility drills on sport days" },
           ].map(item => (
             <div key={item.label} style={{ ...s.card, marginBottom: 8 }}>
               <p style={s.label}>{item.label}</p>
               <p style={{ fontFamily: font.head, fontSize: 18, color: T.teal, marginTop: 6 }}>{item.data}</p>
+              <p style={{ ...s.body, fontSize: 11, marginTop: 4 }}>{item.note}</p>
             </div>
           ))}
           <div style={s.card}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <p style={s.label}>JUMP CONFIDENCE</p>
-              <span style={{ fontFamily: font.head, fontSize: 16, color: T.copper }}>LEVEL 07<span style={{ color: T.muted }}>/10</span></span>
+              <span style={{ fontFamily: font.head, fontSize: 16, color: T.copper }}>LEVEL 03<span style={{color: T.muted}}>/10</span></span>
             </div>
             <div style={{ display: "flex", gap: 4, marginTop: 10 }}>
-              {Array.from({ length: 10 }, (_, i) => (
-                <div key={i} style={{ flex: 1, height: 6, background: i < 7 ? T.teal : T.cardHigh }} />
+              {Array.from({length: 10}, (_, i) => (
+                <div key={i} style={{ flex: 1, height: 6, background: i < 3 ? T.teal : T.cardHigh }} />
               ))}
             </div>
           </div>
@@ -1736,18 +1702,17 @@ const IntelScreen = () => {
         <div style={{ padding: "20px 20px 0" }}>
           <p style={{ ...s.label, marginBottom: 16 }}>STRENGTH PROGRESSION</p>
           {[
-            { name: "DB Bench Press", from: "14kg × 8", to: "18kg × 10" },
-            { name: "Leg Press", from: "40kg × 10", to: "60kg × 12" },
-            { name: "Lat Pulldown", from: "30kg × 8", to: "37.5kg × 10" },
-            { name: "Hip Thrust", from: "20kg × 10", to: "40kg × 12" },
-            { name: "Barbell Squat", from: "20kg × 6", to: "30kg × 8" },
+            { name: "DB Bench Press", current: "14kg × 8-10", target: "→ 20kg × 10" },
+            { name: "Leg Press", current: "40kg × 10-12", target: "→ 70kg × 12" },
+            { name: "Lat Pulldown", current: "30kg × 10-12", target: "→ 40kg × 12" },
+            { name: "Hip Thrust", current: "20kg × 10-12", target: "→ 50kg × 12" },
+            { name: "Barbell Squat", current: "20kg × 6-8", target: "→ 40kg × 8" },
           ].map(item => (
             <div key={item.name} style={{ ...s.card, marginBottom: 8 }}>
               <p style={s.label}>{item.name}</p>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 6 }}>
-                <span style={{ fontFamily: font.head, fontSize: 14, color: T.muted }}>{item.from}</span>
-                <span style={{ color: T.copper }}>»</span>
-                <span style={{ fontFamily: font.head, fontSize: 18, color: T.teal, fontWeight: 700 }}>{item.to}</span>
+                <span style={{ fontFamily: font.head, fontSize: 16, color: T.cream }}>{item.current}</span>
+                <span style={{ color: T.muted, fontSize: 12 }}>{item.target}</span>
               </div>
             </div>
           ))}
@@ -1789,7 +1754,7 @@ export default function App() {
   return (
     <div style={s.app}>
       <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-
+      
       <div style={{ paddingBottom: 60, minHeight: "calc(100vh - 60px)" }}>
         {screen === "command" && <CommandScreen onStartWorkout={startWorkout} />}
         {screen === "train" && <WeeklyScreen onStartWorkout={startWorkout} />}
@@ -1811,8 +1776,8 @@ export default function App() {
                 </div>
                 <div style={{ width: 40, height: 40, background: T.cardHigh, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 2L2 19.5h20L12 2z" fill="none" stroke={googleConnected ? T.teal : T.muted} strokeWidth="1.5" />
-                    <path d="M12 2l8.5 14.25H3.5L12 2z" fill="none" stroke={googleConnected ? T.teal : T.muted} strokeWidth="1.5" />
+                    <path d="M12 2L2 19.5h20L12 2z" fill="none" stroke={googleConnected ? T.teal : T.muted} strokeWidth="1.5"/>
+                    <path d="M12 2l8.5 14.25H3.5L12 2z" fill="none" stroke={googleConnected ? T.teal : T.muted} strokeWidth="1.5"/>
                   </svg>
                 </div>
               </div>
@@ -1845,7 +1810,7 @@ export default function App() {
                     ["Workouts", syncStatus === "syncing" ? "Syncing..." : "Up to date", T.teal],
                     ["Nutrition", syncStatus === "syncing" ? "Syncing..." : "Up to date", T.teal],
                     ["Body Metrics", "1 entry", T.teal],
-                    ["Schedule", "Week 3 saved", T.teal],
+                    ["Schedule", "Week 1 saved", T.teal],
                   ].map(([name, status, color]) => (
                     <div key={name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: `1px solid ${T.cardHigh}` }}>
                       <span style={{ ...s.body, color: T.cream, fontSize: 13 }}>{name}</span>
@@ -1860,7 +1825,7 @@ export default function App() {
             <div style={s.card}>
               <p style={s.label}>BIOMETRICS (EVOLT SCAN — JAN 7, 2026)</p>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 12 }}>
-                {[["Height", "171 cm"], ["Weight", "~78 kg"], ["Age", "27"], ["Body Fat", "24.5%"], ["BMR", "1,590 kcal"], ["TEE", "2,448 kcal"], ["Lean Mass", "56.5 kg"], ["Bio Age", "29"]].map(([k, v]) => (
+                {[["Height", "171 cm"], ["Weight", "78 kg"], ["Age", "27"], ["Body Fat", "24.5%"], ["BMR", "1,590 kcal"], ["TEE", "2,448 kcal"], ["Lean Mass", "56.5 kg"], ["Bio Age", "29"]].map(([k, v]) => (
                   <div key={k}>
                     <p style={{ ...s.label, fontSize: 9 }}>{k}</p>
                     <p style={{ fontFamily: font.head, fontSize: 16, color: T.cream, marginTop: 4 }}>{v}</p>
