@@ -170,17 +170,50 @@ const ACTIVITY_LIBRARY = [
   },
 ];
 
-// ── Week Shell (days with no fixed activity) ──
-// March 30, 2026 = Monday
-const WEEK_DAYS = [
-  { day: "MON", date: 30, month: "MAR" },
-  { day: "TUE", date: 31, month: "MAR" },
-  { day: "WED", date: 1, month: "APR" },
-  { day: "THU", date: 2, month: "APR" },
-  { day: "FRI", date: 3, month: "APR" },
-  { day: "SAT", date: 4, month: "APR" },
-  { day: "SUN", date: 5, month: "APR" },
-];
+// ── Dynamic Week Generator ──
+// Computes Mon-Sun dates for any week relative to the current week
+const MONTHS = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+const DAY_NAMES = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
+
+function getWeekDays(weekOffset = 0) {
+  const now = new Date();
+  // Find Monday of current week
+  const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon...
+  const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + diffToMonday + (weekOffset * 7));
+  monday.setHours(0, 0, 0, 0);
+
+  return DAY_NAMES.map((dayName, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return {
+      day: dayName,
+      date: d.getDate(),
+      month: MONTHS[d.getMonth()],
+      year: d.getFullYear(),
+      fullDate: d.toISOString().split("T")[0], // "YYYY-MM-DD"
+    };
+  });
+}
+
+function getWeekLabel(weekDays) {
+  const first = weekDays[0];
+  const last = weekDays[6];
+  if (first.month === last.month) {
+    return `${first.month} ${first.date} - ${last.date}`;
+  }
+  return `${first.month} ${first.date} - ${last.month} ${last.date}`;
+}
+
+function getTodayDayName() {
+  const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+  return days[new Date().getDay()];
+}
+
+function getTodayISO() {
+  return new Date().toISOString().split("T")[0];
+}
 
 // Default suggestion (can be overridden)
 const DEFAULT_SCHEDULE = {
@@ -198,9 +231,8 @@ const PROGRAM = {
   week: 1,
   totalWeeks: 12,
   phase: "Foundation",
-  // days is now dynamically built from schedule state
   get days() {
-    return WEEK_DAYS.map(d => {
+    return getWeekDays(0).map(d => {
       const actId = DEFAULT_SCHEDULE[d.day];
       const activity = actId ? ACTIVITY_LIBRARY.find(a => a.id === actId) : null;
       return {
@@ -209,7 +241,7 @@ const PROGRAM = {
         name: activity?.name || "—",
         type: activity?.type || "empty",
         duration: activity?.duration || 0,
-        status: d.day === "MON" ? "active" : "upcoming",
+        status: d.fullDate === getTodayISO() ? "active" : "upcoming",
         exercises: activity?.exercises || [],
         activityId: actId,
       };
@@ -313,10 +345,11 @@ const MacroBar = ({ label, current, target, color, showWarning }) => (
 // ═══════════════════════════════════
 // SCREEN: COMMAND (Home Dashboard)
 // ═══════════════════════════════════
-const CommandScreen = ({ onStartWorkout, onNavigate }) => {
-  const todayActivity = ACTIVITY_LIBRARY.find(a => a.id === DEFAULT_SCHEDULE["MON"]);
+const CommandScreen = ({ onStartWorkout, macros, today, todayActivity, workoutLog }) => {
   const phasePct = Math.round((PROGRAM.week / PROGRAM.totalWeeks) * 100);
-  const { macros } = PROGRAM;
+  const todayCompleted = workoutLog.some(w => w.date === new Date().toISOString().split("T")[0]);
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   return (
     <div style={{ paddingBottom: 80 }}>
@@ -332,7 +365,7 @@ const CommandScreen = ({ onStartWorkout, onNavigate }) => {
       {/* Greeting */}
       <div style={{ padding: "24px 20px 0" }}>
         <p style={s.label}>OPERATIONAL STATUS: OPTIMAL</p>
-        <h1 style={{ ...s.h1, fontSize: 32, marginTop: 8 }}>Good morning,{"\n"}Snehal</h1>
+        <h1 style={{ ...s.h1, fontSize: 32, marginTop: 8 }}>{greeting},{"\n"}Snehal</h1>
       </div>
 
       {/* Phase Card */}
@@ -396,21 +429,40 @@ const CommandScreen = ({ onStartWorkout, onNavigate }) => {
       {todayActivity && (
         <div style={{ padding: "0 20px" }}>
           <p style={{ ...s.label, marginBottom: 12 }}>TODAY'S PROTOCOL</p>
-          <div style={{ ...s.cardHighlight, display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} onClick={onStartWorkout}>
+          <div style={{ ...s.cardHighlight, display: "flex", justifyContent: "space-between", alignItems: "center", cursor: todayCompleted ? "default" : "pointer" }} onClick={todayCompleted ? undefined : onStartWorkout}>
             <div>
-              <h2 style={s.h2}>{todayActivity.label} — Monday</h2>
+              <h2 style={s.h2}>{todayActivity.label} — {today.charAt(0) + today.slice(1).toLowerCase()}day</h2>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8 }}>
                 <span style={{ ...s.body, fontSize: 12 }}>{todayActivity.exercises.length} exercises</span>
                 <span style={{ ...s.body, fontSize: 12 }}>{todayActivity.duration} min</span>
               </div>
-              <p style={{ ...s.labelCopper, marginTop: 8, fontSize: 10 }}>STRENGTH FOCUS</p>
+              {todayCompleted ? (
+                <p style={{ fontFamily: font.head, fontSize: 10, letterSpacing: "0.1em", color: T.teal, marginTop: 8 }}>✓ COMPLETED TODAY</p>
+              ) : (
+                <p style={{ ...s.labelCopper, marginTop: 8, fontSize: 10 }}>TAP TO BEGIN</p>
+              )}
             </div>
-            <div style={{ background: T.cardHigh, padding: 14, cursor: "pointer" }} onClick={onStartWorkout}>
-              <Icon name="play" size={24} color={T.copper} />
-            </div>
+            {!todayCompleted && (
+              <div style={{ background: T.cardHigh, padding: 14 }}>
+                <Icon name="play" size={24} color={T.copper} />
+              </div>
+            )}
+            {todayCompleted && (
+              <div style={{ background: T.cardHigh, padding: 14 }}>
+                <Icon name="check" size={24} color={T.teal} />
+              </div>
+            )}
           </div>
         </div>
       )}
+      {!todayActivity && (
+        <div style={{ padding: "0 20px" }}>
+          <p style={{ ...s.label, marginBottom: 12 }}>TODAY'S PROTOCOL</p>
+          <div style={s.card}>
+            <p style={{ ...s.body, color: T.label }}>No activity assigned for today. Go to TRAIN to set one up.</p>
+          </div>
+        </div>
+      )}}
     </div>
   );
 };
@@ -418,9 +470,8 @@ const CommandScreen = ({ onStartWorkout, onNavigate }) => {
 // ═══════════════════════════════════
 // SCREEN: ACTIVE WORKOUT
 // ═══════════════════════════════════
-const WorkoutScreen = ({ onBack }) => {
-  const todayActivity = ACTIVITY_LIBRARY.find(a => a.id === DEFAULT_SCHEDULE["MON"]);
-  const exercises = todayActivity?.exercises || [];
+const WorkoutScreen = ({ activity, onBack, onComplete }) => {
+  const exercises = activity?.exercises || [];
   
   const [currentExIdx, setCurrentExIdx] = useState(0);
   const [sets, setSets] = useState(() => 
@@ -428,9 +479,10 @@ const WorkoutScreen = ({ onBack }) => {
   );
   const [currentSet, setCurrentSet] = useState(0);
   const [resting, setResting] = useState(false);
-  const [restTime, setRestTime] = useState(90);
+  const [restTime, setRestTime] = useState(60);
   const [elapsed, setElapsed] = useState(0);
   const [showDetail, setShowDetail] = useState(false);
+  const [workoutDone, setWorkoutDone] = useState(false);
   const timerRef = useRef(null);
 
   // Workout timer
@@ -495,10 +547,101 @@ const WorkoutScreen = ({ onBack }) => {
       setCurrentSet(0);
       setResting(true);
       setRestTime(nextExRest);
+    } else {
+      // ALL exercises and ALL sets complete!
+      setWorkoutDone(true);
     }
   };
 
+  const skipExercise = () => {
+    if (currentExIdx < exercises.length - 1) {
+      setCurrentExIdx(currentExIdx + 1);
+      setCurrentSet(0);
+      setResting(false);
+    } else {
+      setWorkoutDone(true);
+    }
+  };
+
+  const finishWorkout = () => {
+    const completedData = {
+      activity: activity.label,
+      activityId: activity.id,
+      exercises: exercises.map((ex, i) => ({
+        name: ex.name,
+        type: ex.type,
+        note: ex.note,
+        completedSets: sets[i],
+      })),
+      duration: Math.round(elapsed / 60),
+      totalSets: sets.flat().filter(s => s.done).length,
+      totalExercises: exercises.length,
+    };
+    onComplete(completedData);
+  };
+
   const skipRest = () => { setResting(false); setRestTime(currentEx?.rest || 60); };
+
+  // ── Workout Complete Screen ──
+  if (workoutDone) {
+    const totalSets = sets.flat().filter(s => s.done).length;
+    const totalPossible = sets.flat().length;
+    return (
+      <div style={{ paddingBottom: 80, textAlign: "center" }}>
+        <div style={{ padding: "40px 20px" }}>
+          <div style={{ width: 80, height: 80, margin: "0 auto 20px", background: `${T.teal}20`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon name="check" size={40} color={T.teal} />
+          </div>
+          <p style={s.labelCopper}>SESSION COMPLETE</p>
+          <h1 style={{ ...s.h1, marginTop: 12, fontSize: 28 }}>{activity?.label}</h1>
+          <p style={{ ...s.body, marginTop: 8, fontSize: 14, color: T.cream }}>{activity?.name}</p>
+        </div>
+
+        <div style={{ padding: "0 20px" }}>
+          <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
+            <div style={{ ...s.card, flex: 1, textAlign: "center" }}>
+              <p style={{ ...s.label, fontSize: 9 }}>DURATION</p>
+              <p style={{ fontFamily: font.head, fontSize: 28, color: T.copper, fontWeight: 700, marginTop: 6 }}>{formatTime(elapsed)}</p>
+            </div>
+            <div style={{ ...s.card, flex: 1, textAlign: "center" }}>
+              <p style={{ ...s.label, fontSize: 9 }}>SETS COMPLETED</p>
+              <p style={{ fontFamily: font.head, fontSize: 28, color: T.teal, fontWeight: 700, marginTop: 6 }}>{totalSets}<span style={{ fontSize: 14, color: T.muted }}>/{totalPossible}</span></p>
+            </div>
+          </div>
+          <div style={{ ...s.card, flex: 1, textAlign: "center" }}>
+            <p style={{ ...s.label, fontSize: 9 }}>EXERCISES</p>
+            <p style={{ fontFamily: font.head, fontSize: 28, color: T.cream, fontWeight: 700, marginTop: 6 }}>{exercises.length}</p>
+          </div>
+        </div>
+
+        <div style={{ padding: "20px 20px 0" }}>
+          <button onClick={finishWorkout} style={s.btn}>SAVE & EXIT</button>
+          <button onClick={onBack} style={{ ...s.btnSecondary, width: "100%", marginTop: 10 }}>DISCARD SESSION</button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── No exercises guard ──
+  if (!exercises.length) {
+    return (
+      <div style={{ padding: 20, textAlign: "center" }}>
+        <div style={{ padding: "16px 20px", borderBottom: `1px solid ${T.cardHigh}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ cursor: "pointer" }} onClick={onBack}><Icon name="close" size={20} color={T.label} /></div>
+          <span style={{ fontFamily: font.head, fontSize: 13, letterSpacing: "0.2em", color: T.copper }}>FORGE</span>
+          <div style={{ width: 28 }} />
+        </div>
+        <div style={{ padding: "40px 20px" }}>
+          <p style={s.labelCopper}>OUTDOOR SESSION</p>
+          <h1 style={{ ...s.h1, marginTop: 12 }}>{activity?.label}</h1>
+          <p style={{ ...s.body, marginTop: 8 }}>{activity?.description}</p>
+          <p style={{ ...s.body, marginTop: 16, color: T.cream }}>This is a flexible session. Log your duration when finished.</p>
+          <button onClick={() => setWorkoutDone(true)} style={{ ...s.btn, marginTop: 24 }}>MARK AS COMPLETE</button>
+          <button onClick={onBack} style={{ ...s.btnSecondary, marginTop: 10, width: "100%" }}>CANCEL</button>
+        </div>
+      </div>
+    );
+  }
 
   if (currentEx?.type === "warmup") {
     return <WarmupScreen onComplete={() => { setCurrentExIdx(1); setCurrentSet(0); }} onBack={onBack} elapsed={elapsed} formatTime={formatTime} />;
@@ -516,7 +659,7 @@ const WorkoutScreen = ({ onBack }) => {
       {/* Session Info */}
       <div style={{ padding: "20px 20px 0" }}>
         <p style={s.label}>PROTOCOL: ACTIVE</p>
-        <h1 style={{ ...s.h1, marginTop: 4 }}>{todayActivity?.label}</h1>
+        <h1 style={{ ...s.h1, marginTop: 4 }}>{activity?.label}</h1>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
           <Icon name="timer" size={18} color={T.copper} />
           <span style={{ fontFamily: font.head, fontSize: 28, color: T.copper, fontWeight: 700 }}>{formatTime(elapsed)}</span>
@@ -625,9 +768,13 @@ const WorkoutScreen = ({ onBack }) => {
       )}
 
       {/* Complete Button */}
+      {/* Complete / Skip Buttons */}
       {!resting && (
         <div style={{ padding: "20px 20px 0" }}>
-          <button onClick={completeSet} style={s.btn}>COMPLETE SET — EXECUTE</button>
+          <button onClick={completeSet} style={s.btn}>
+            {currentEx?.type === "cardio" ? "MARK CARDIO DONE" : currentEx?.type === "plyo" ? "COMPLETE DRILL" : currentEx?.type === "agility" ? "COMPLETE DRILL" : "COMPLETE SET — EXECUTE"}
+          </button>
+          <button onClick={skipExercise} style={{ ...s.btnSecondary, width: "100%", marginTop: 8, fontSize: 10 }}>SKIP EXERCISE →</button>
         </div>
       )}
 
@@ -769,15 +916,21 @@ const WarmupScreen = ({ onComplete, onBack, elapsed, formatTime }) => {
 // ═══════════════════════════════════
 // SCREEN: WEEKLY OPERATIONS (Flexible Scheduler)
 // ═══════════════════════════════════
-const WeeklyScreen = ({ onStartWorkout }) => {
-  const [schedule, setSchedule] = useState({ ...DEFAULT_SCHEDULE });
+const WeeklyScreen = ({ onStartWorkout, schedule, setSchedule, today, workoutLog, customSportsGlobal, setCustomSportsGlobal }) => {
   const [selectedDay, setSelectedDay] = useState(null);
   const [showLibrary, setShowLibrary] = useState(false);
   const [filterCat, setFilterCat] = useState("all");
-  const [customSports, setCustomSports] = useState([]);
   const [showAddSport, setShowAddSport] = useState(false);
   const [newSport, setNewSport] = useState({ name: "", duration: 60, icon: "⚽" });
+  const [weekOffset, setWeekOffset] = useState(0);
 
+  const weekDays = getWeekDays(weekOffset);
+  const weekLabel = getWeekLabel(weekDays);
+  const isCurrentWeek = weekOffset === 0;
+  const todayISO = getTodayISO();
+
+  const customSports = customSportsGlobal;
+  const setCustomSports = setCustomSportsGlobal;
   const allActivities = [...ACTIVITY_LIBRARY, ...customSports];
 
   const getActivity = (dayKey) => {
@@ -837,7 +990,7 @@ const WeeklyScreen = ({ onStartWorkout }) => {
 
   const sportIcons = ["⚽", "🏀", "🏐", "🏓", "🥊", "🚴", "🏃", "🧗", "⛳", "🎯", "🏑", "🤸"];
 
-  const today = "MON";
+  // today comes from props now
   const categories = [
     { id: "all", label: "ALL" },
     { id: "strength", label: "STRENGTH" },
@@ -867,10 +1020,18 @@ const WeeklyScreen = ({ onStartWorkout }) => {
 
   return (
     <div style={{ paddingBottom: 80 }}>
-      {/* Header */}
+      {/* Header with Week Navigation */}
       <div style={{ padding: "20px 20px 0" }}>
         <p style={s.label}>WEEKLY OPERATIONS</p>
-        <h1 style={{ ...s.h1, marginTop: 8 }}>Week {PROGRAM.week} — Mar 30 - Apr 5</h1>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+          <button onClick={() => setWeekOffset(w => w - 1)} style={{ background: "none", border: `1px solid ${T.label}33`, color: T.cream, padding: "6px 12px", cursor: "pointer", fontFamily: font.head, fontSize: 16 }}>◄</button>
+          <div style={{ textAlign: "center" }}>
+            <h1 style={{ ...s.h1, fontSize: 20 }}>{weekLabel}</h1>
+            {isCurrentWeek && <p style={{ ...s.body, fontSize: 11, marginTop: 2, color: T.copper }}>THIS WEEK</p>}
+            {!isCurrentWeek && <button onClick={() => setWeekOffset(0)} style={{ background: "none", border: "none", color: T.teal, fontFamily: font.head, fontSize: 10, cursor: "pointer", letterSpacing: "0.1em", marginTop: 4 }}>← BACK TO THIS WEEK</button>}
+          </div>
+          <button onClick={() => setWeekOffset(w => w + 1)} style={{ background: "none", border: `1px solid ${T.label}33`, color: T.cream, padding: "6px 12px", cursor: "pointer", fontFamily: font.head, fontSize: 16 }}>►</button>
+        </div>
         <div style={{ display: "flex", gap: 16, marginTop: 8 }}>
           <span style={{ ...s.body, fontSize: 12, color: T.teal }}>{gymDays} gym</span>
           <span style={{ ...s.body, fontSize: 12, color: "#D4944C" }}>{sportDays} sport</span>
@@ -880,9 +1041,9 @@ const WeeklyScreen = ({ onStartWorkout }) => {
 
       {/* Day Selector Row */}
       <div style={{ display: "flex", gap: 6, padding: "16px 20px", overflowX: "auto" }}>
-        {WEEK_DAYS.map(d => {
+        {weekDays.map(d => {
           const act = getActivity(d.day);
-          const isToday = d.day === today;
+          const isToday = d.fullDate === todayISO;
           const hasActivity = !!act;
           const typeColor = act?.type === "gym" ? T.teal : act?.type === "outdoor" ? "#D4944C" : act?.type === "rest" ? T.success : T.cardHigh;
           return (
@@ -907,10 +1068,10 @@ const WeeklyScreen = ({ onStartWorkout }) => {
           <button onClick={() => setSchedule({...DEFAULT_SCHEDULE})} style={{ ...s.btnSecondary, padding: "6px 12px", fontSize: 9 }}>RESET DEFAULT</button>
         </div>
 
-        {WEEK_DAYS.map(d => {
+        {weekDays.map(d => {
           const act = getActivity(d.day);
-          const isToday = d.day === today;
-          const isDone = false; // Nothing completed yet - will be dynamic later
+          const isToday = d.fullDate === todayISO;
+          const isDone = workoutLog.some(w => w.day === d.day && w.date === d.fullDate);
           const isEmpty = !act;
           const typeColor = act?.type === "gym" ? T.teal : act?.type === "outdoor" ? "#D4944C" : act?.type === "rest" ? T.success : T.muted;
           const typeLabel = act?.type === "gym" ? "GYM SESSION" : act?.type === "outdoor" ? "OUTDOOR RECON" : act?.type === "rest" ? "RECOVERY" : "";
@@ -962,12 +1123,16 @@ const WeeklyScreen = ({ onStartWorkout }) => {
                         )}
                       </div>
                     </div>
-                    {/* Start button for today */}
-                    {isToday && act.type === "gym" && (
-                      <button onClick={onStartWorkout} style={{ ...s.btn, marginTop: 12, padding: "12px 20px" }}>BEGIN SESSION</button>
+                    {/* Start button — show for any assigned activity that isn't done */}
+                    {!isDone && act.type === "gym" && (
+                      <button onClick={() => onStartWorkout(schedule[d.day])} style={{ ...s.btn, marginTop: 12, padding: "12px 20px" }}>
+                        {isToday ? "BEGIN SESSION" : "START WORKOUT"}
+                      </button>
                     )}
-                    {isToday && act.type === "outdoor" && (
-                      <button style={{ ...s.btnSecondary, marginTop: 12, width: "100%", padding: "10px 20px", fontSize: 11 }}>LOG AFTER SESSION</button>
+                    {!isDone && act.type === "outdoor" && (
+                      <button onClick={() => onStartWorkout(schedule[d.day])} style={{ ...s.btn, marginTop: 12, padding: "12px 20px" }}>
+                        {act.exercises.length > 0 ? "START AGILITY + SESSION" : "LOG SESSION"}
+                      </button>
                     )}
                   </div>
                 ) : (
@@ -1256,14 +1421,17 @@ const MEAL_LIBRARY = {
   ]
 };
 
-// ── Default Weekly Meal Plan ──
+// ── Default Weekly Meal Plan — Expert Redesign ──
+// Target: ~1900 kcal, 140-155g protein, 170-200g carbs, 55-65g fat
+// Hydration: 3L water daily. Pre-workout: coffee + banana or oats 90 min before. Post-workout: whey + creatine within 30 min.
+// Sunday batch cook: 2 lunch types (Mon-Wed = Soya Chunks, Thu-Fri = Paneer Tikka), prep dal for dinners
 const DEFAULT_MEAL_PLAN = {
-  MON: { breakfast: "b1", lunch: "l1", dinner: "d1", snack: null },
-  TUE: { breakfast: "b1", lunch: "l1", dinner: "d2", snack: null },
-  WED: { breakfast: "b1", lunch: "l1", dinner: "d5", snack: null },
-  THU: { breakfast: "b1", lunch: "l1", dinner: "d4", snack: "s1" },
-  FRI: { breakfast: "b2", lunch: "l3", dinner: "d3", snack: null },
-  SAT: { breakfast: "b3", lunch: "l4", dinner: "d7", snack: "s5" },
+  MON: { breakfast: "b1", lunch: "l1", dinner: "d2", snack: "s1" },
+  TUE: { breakfast: "b1", lunch: "l1", dinner: "d5", snack: "s5" },
+  WED: { breakfast: "b1", lunch: "l1", dinner: "d1", snack: "s4" },
+  THU: { breakfast: "b1", lunch: "l3", dinner: "d4", snack: "s1" },
+  FRI: { breakfast: "b2", lunch: "l3", dinner: "d7", snack: "s2" },
+  SAT: { breakfast: "b3", lunch: "l4", dinner: "d3", snack: "s5" },
   SUN: { breakfast: "b4", lunch: "l5", dinner: "d6", snack: "s3" },
 };
 
@@ -1272,35 +1440,67 @@ const findMeal = (id) => {
   return all.find(m => m.id === id);
 };
 
-const FuelScreen = () => {
+const FuelScreen = ({ todayMealLog, setTodayMealLog }) => {
   const [fuelTab, setFuelTab] = useState("today");
   const [mealPlan, setMealPlan] = useState({ ...DEFAULT_MEAL_PLAN });
-  const [logged, setLogged] = useState({ coffee: false, breakfast: false, lunch: false, postworkout: false, dinner: false, snack: false });
   const [selectedRecipe, setSelectedRecipe] = useState(null);
-  const [swapSlot, setSwapSlot] = useState(null); // {day, slot}
-  const today = "MON";
-  const todayPlan = mealPlan[today];
+  const [swapSlot, setSwapSlot] = useState(null);
+  const [viewDay, setViewDay] = useState(null); // For week plan day-by-day view
+  const [showCustomMeal, setShowCustomMeal] = useState(null); // {day, slot}
+  const [customMealInput, setCustomMealInput] = useState({ name: "", kcal: "", protein: "", carbs: "", fat: "" });
+  
+  const today = getTodayDayName();
+  const todayPlan = mealPlan[today] || mealPlan["MON"];
+  const weekDays = getWeekDays(0);
 
   const fixedMeals = MEAL_LIBRARY.fixed;
-  const todayMeals = [
-    { slot: "coffee", time: "0700", label: "PRE-TRAINING FUEL", meal: fixedMeals[0], loggable: true },
-    { slot: "breakfast", time: "1000", label: "BREAKFAST", meal: findMeal(todayPlan.breakfast), loggable: true },
-    { slot: "lunch", time: "1300", label: "LUNCH", meal: findMeal(todayPlan.lunch), loggable: true },
-    { slot: "postworkout", time: "1830", label: "POST-WORKOUT", meal: fixedMeals[1], loggable: true },
-    { slot: "dinner", time: "2000", label: "DINNER", meal: findMeal(todayPlan.dinner), loggable: true },
-    ...(todayPlan.snack ? [{ slot: "snack", time: "1530", label: "SNACK", meal: findMeal(todayPlan.snack), loggable: true }] : []),
-  ].sort((a, b) => a.time.localeCompare(b.time));
+  
+  const getMealsForDay = (dayKey) => {
+    const plan = mealPlan[dayKey] || mealPlan["MON"];
+    return [
+      { slot: "coffee", time: "0700", label: "PRE-TRAINING FUEL", meal: fixedMeals[0] },
+      { slot: "breakfast", time: "1000", label: "BREAKFAST", meal: findMeal(plan.breakfast) },
+      { slot: "lunch", time: "1300", label: "LUNCH", meal: findMeal(plan.lunch) },
+      { slot: "postworkout", time: "1830", label: "POST-WORKOUT", meal: fixedMeals[1] },
+      { slot: "dinner", time: "2000", label: "DINNER", meal: findMeal(plan.dinner) },
+      ...(plan.snack ? [{ slot: "snack", time: "1530", label: "SNACK", meal: findMeal(plan.snack) }] : []),
+    ].sort((a, b) => a.time.localeCompare(b.time));
+  };
+  
+  const todayMeals = getMealsForDay(today);
+
+  const logged = todayMealLog;
+  const toggleLog = (slot) => setTodayMealLog(prev => ({ ...prev, [slot]: !prev[slot] }));
 
   const loggedMeals = todayMeals.filter(m => logged[m.slot]);
   const totalLogged = { kcal: loggedMeals.reduce((s, m) => s + (m.meal?.kcal || 0), 0), protein: loggedMeals.reduce((s, m) => s + (m.meal?.protein || 0), 0), carbs: loggedMeals.reduce((s, m) => s + (m.meal?.carbs || 0), 0), fat: loggedMeals.reduce((s, m) => s + (m.meal?.fat || 0), 0) };
   const totalPlanned = { kcal: todayMeals.reduce((s, m) => s + (m.meal?.kcal || 0), 0), protein: todayMeals.reduce((s, m) => s + (m.meal?.protein || 0), 0) };
   const targets = { kcal: 1900, protein: 145, carbs: 185, fat: 60 };
 
-  const toggleLog = (slot) => setLogged(prev => ({ ...prev, [slot]: !prev[slot] }));
-
   const swapMeal = (day, slot, newMealId) => {
     setMealPlan(prev => ({ ...prev, [day]: { ...prev[day], [slot]: newMealId } }));
     setSwapSlot(null);
+  };
+
+  const addCustomMealToLibrary = () => {
+    if (!customMealInput.name.trim()) return;
+    const slot = showCustomMeal.slot;
+    const day = showCustomMeal.day;
+    const category = slot === "breakfast" ? "breakfast" : slot === "lunch" ? "lunch" : slot === "dinner" ? "dinner" : "snacks";
+    const id = "custom_" + Date.now();
+    const newMeal = {
+      id, name: customMealInput.name,
+      kcal: parseInt(customMealInput.kcal) || 0,
+      protein: parseInt(customMealInput.protein) || 0,
+      carbs: parseInt(customMealInput.carbs) || 0,
+      fat: parseInt(customMealInput.fat) || 0,
+      prep: 0, ingredients: ["Custom entry"], steps: ["As prepared"],
+      tags: ["custom"]
+    };
+    MEAL_LIBRARY[category].push(newMeal);
+    swapMeal(day, slot, id);
+    setShowCustomMeal(null);
+    setCustomMealInput({ name: "", kcal: "", protein: "", carbs: "", fat: "" });
   };
 
   // Grocery list generator
@@ -1419,56 +1619,111 @@ const FuelScreen = () => {
         </div>
       )}
 
-      {/* ═══ WEEK PLAN TAB ═══ */}
+      {/* ═══ WEEK PLAN TAB — Day-by-Day View ═══ */}
       {fuelTab === "week" && (
         <div style={{ padding: "16px 20px 0" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <p style={s.label}>WEEKLY FUEL MAP</p>
             <button onClick={() => setMealPlan({...DEFAULT_MEAL_PLAN})} style={{ ...s.btnSecondary, padding: "4px 10px", fontSize: 9 }}>RESET</button>
           </div>
-          {Object.entries(mealPlan).map(([day, plan]) => {
-            const bk = findMeal(plan.breakfast);
-            const ln = findMeal(plan.lunch);
-            const dn = findMeal(plan.dinner);
-            const sn = plan.snack ? findMeal(plan.snack) : null;
-            const dayTotal = [bk, ln, dn, sn, ...fixedMeals].filter(Boolean).reduce((s, m) => ({ kcal: s.kcal + m.kcal, protein: s.protein + m.protein }), { kcal: 0, protein: 0 });
-            const isToday = day === today;
-            return (
-              <div key={day} style={{ background: T.card, marginBottom: 8, borderLeft: isToday ? `3px solid ${T.copper}` : "none", padding: "14px 16px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <p style={s.label}>{day}DAY</p>
-                  <div style={{ display: "flex", gap: 10 }}>
-                    <span style={{ fontFamily: font.head, fontSize: 11, color: T.cream }}>{dayTotal.kcal} kcal</span>
-                    <span style={{ fontFamily: font.head, fontSize: 11, color: dayTotal.protein >= 140 ? T.teal : T.proteinRed }}>{dayTotal.protein}g P</span>
-                  </div>
-                </div>
-                {[["breakfast", bk, "🌅"], ["lunch", ln, "☀️"], ["dinner", dn, "🌙"], ...(sn ? [["snack", sn, "🥜"]] : [])].map(([slot, meal, icon]) => meal && (
-                  <div key={slot} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 12 }}>{icon}</span>
-                      <span style={{ ...s.body, fontSize: 12, color: T.cream }}>{meal.name}</span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ ...s.body, fontSize: 10 }}>{meal.protein}g P</span>
-                      <button onClick={() => setSwapSlot({ day, slot })} style={{ background: "none", border: `1px solid ${T.label}33`, color: T.label, padding: "2px 6px", cursor: "pointer", fontFamily: font.head, fontSize: 8, letterSpacing: "0.08em" }}>SWAP</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            );
-          })}
-          {/* Weekly protein summary */}
-          <div style={{ background: T.cardHigh, padding: 14, marginTop: 4 }}>
-            <p style={s.label}>WEEKLY AVERAGE</p>
-            {(() => {
-              const days = Object.values(mealPlan);
-              const avgP = Math.round(days.reduce((s, plan) => {
-                const meals = [findMeal(plan.breakfast), findMeal(plan.lunch), findMeal(plan.dinner), plan.snack ? findMeal(plan.snack) : null, ...fixedMeals].filter(Boolean);
-                return s + meals.reduce((t, m) => t + m.protein, 0);
-              }, 0) / 7);
-              return <p style={{ fontFamily: font.head, fontSize: 16, color: avgP >= 140 ? T.teal : T.proteinRed, marginTop: 6 }}>{avgP}g protein/day {avgP >= 140 ? "✓ ON TARGET" : "⚠ BELOW TARGET"}</p>;
-            })()}
+
+          {/* Day selector pills */}
+          <div style={{ display: "flex", gap: 4, marginBottom: 16, overflowX: "auto" }}>
+            {DAY_NAMES.map(dayName => {
+              const isSelected = viewDay === dayName;
+              const isT = dayName === today;
+              return (
+                <button key={dayName} onClick={() => setViewDay(isSelected ? null : dayName)} style={{
+                  padding: "6px 10px", fontFamily: font.head, fontSize: 10, letterSpacing: "0.08em",
+                  background: isSelected ? T.copper : "transparent",
+                  border: isT ? `2px solid ${T.copper}` : `1px solid ${T.cardHigh}`,
+                  color: isSelected ? T.surface : isT ? T.copper : T.cream,
+                  cursor: "pointer", whiteSpace: "nowrap"
+                }}>{dayName}</button>
+              );
+            })}
           </div>
+
+          {/* If a day is selected, show detailed editable view */}
+          {viewDay ? (
+            <div>
+              <p style={{ ...s.labelCopper, marginBottom: 10 }}>{viewDay}DAY — DETAILED MEAL PLAN</p>
+              {getMealsForDay(viewDay).map(item => {
+                const meal = item.meal;
+                if (!meal) return null;
+                const isFixed = item.slot === "coffee" || item.slot === "postworkout";
+                return (
+                  <div key={item.slot} style={{ background: T.card, marginBottom: 8, borderLeft: `3px solid ${T.teal}`, padding: "12px 16px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <p style={{ ...s.label, fontSize: 9 }}>{item.time} — {item.label}</p>
+                      {!isFixed && (
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button onClick={() => setSwapSlot({ day: viewDay, slot: item.slot })} style={{ background: "none", border: `1px solid ${T.label}33`, color: T.label, padding: "3px 8px", cursor: "pointer", fontFamily: font.head, fontSize: 8, letterSpacing: "0.08em" }}>SWAP</button>
+                          <button onClick={() => setShowCustomMeal({ day: viewDay, slot: item.slot })} style={{ background: "none", border: `1px solid ${T.teal}33`, color: T.teal, padding: "3px 8px", cursor: "pointer", fontFamily: font.head, fontSize: 8, letterSpacing: "0.08em" }}>CUSTOM</button>
+                        </div>
+                      )}
+                    </div>
+                    <h3 style={{ ...s.h3, marginTop: 6, fontSize: 13 }}>{meal.name}</h3>
+                    <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+                      <span style={{ fontFamily: font.head, fontSize: 10, color: T.cream }}>{meal.kcal} kcal</span>
+                      <span style={{ fontFamily: font.head, fontSize: 10, color: T.proteinRed }}>{meal.protein}g P</span>
+                      <span style={{ fontFamily: font.head, fontSize: 10, color: T.teal }}>{meal.carbs}g C</span>
+                      <span style={{ fontFamily: font.head, fontSize: 10, color: T.fatBlue }}>{meal.fat}g F</span>
+                    </div>
+                    {meal.steps && <button onClick={() => setSelectedRecipe(meal)} style={{ ...s.btnSecondary, marginTop: 8, padding: "4px 10px", fontSize: 9, width: "auto" }}>VIEW RECIPE</button>}
+                  </div>
+                );
+              })}
+              {/* Add snack if day doesn't have one */}
+              {!mealPlan[viewDay]?.snack && (
+                <div onClick={() => setSwapSlot({ day: viewDay, slot: "snack" })} style={{ border: `1px dashed ${T.label}44`, padding: "12px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}>
+                  <Icon name="plus" size={16} color={T.label} />
+                  <span style={{ ...s.body, color: T.label, fontSize: 12 }}>Add a snack for {viewDay}day</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Overview — all days summary */
+            <div>
+              {Object.entries(mealPlan).map(([day, plan]) => {
+                const bk = findMeal(plan.breakfast);
+                const ln = findMeal(plan.lunch);
+                const dn = findMeal(plan.dinner);
+                const sn = plan.snack ? findMeal(plan.snack) : null;
+                const dayTotal = [bk, ln, dn, sn, ...fixedMeals].filter(Boolean).reduce((acc, m) => ({ kcal: acc.kcal + m.kcal, protein: acc.protein + m.protein }), { kcal: 0, protein: 0 });
+                const isT = day === today;
+                return (
+                  <div key={day} onClick={() => setViewDay(day)} style={{ background: T.card, marginBottom: 8, borderLeft: isT ? `3px solid ${T.copper}` : "none", padding: "12px 16px", cursor: "pointer" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <p style={s.label}>{day}DAY {isT ? "← TODAY" : ""}</p>
+                      <div style={{ display: "flex", gap: 10 }}>
+                        <span style={{ fontFamily: font.head, fontSize: 11, color: T.cream }}>{dayTotal.kcal} kcal</span>
+                        <span style={{ fontFamily: font.head, fontSize: 11, color: dayTotal.protein >= 140 ? T.teal : T.proteinRed }}>{dayTotal.protein}g P</span>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
+                      {[bk, ln, dn, sn].filter(Boolean).map(m => (
+                        <span key={m.id} style={{ ...s.body, fontSize: 10, color: T.muted, background: T.cardHigh, padding: "2px 6px" }}>{m.name}</span>
+                      ))}
+                    </div>
+                    <p style={{ ...s.body, fontSize: 10, marginTop: 6, color: T.copper }}>TAP TO EDIT →</p>
+                  </div>
+                );
+              })}
+              {/* Weekly protein summary */}
+              <div style={{ background: T.cardHigh, padding: 14, marginTop: 4 }}>
+                <p style={s.label}>WEEKLY AVERAGE</p>
+                {(() => {
+                  const allDays = Object.values(mealPlan);
+                  const avgP = Math.round(allDays.reduce((acc, plan) => {
+                    const meals = [findMeal(plan.breakfast), findMeal(plan.lunch), findMeal(plan.dinner), plan.snack ? findMeal(plan.snack) : null, ...fixedMeals].filter(Boolean);
+                    return acc + meals.reduce((t, m) => t + m.protein, 0);
+                  }, 0) / 7);
+                  return <p style={{ fontFamily: font.head, fontSize: 16, color: avgP >= 140 ? T.teal : T.proteinRed, marginTop: 6 }}>{avgP}g protein/day {avgP >= 140 ? "✓ ON TARGET" : "⚠ BELOW TARGET"}</p>;
+                })()}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1500,6 +1755,35 @@ const FuelScreen = () => {
               </div>
             ));
           })()}
+        </div>
+      )}
+
+      {/* ═══ Custom Meal Entry Modal ═══ */}
+      {showCustomMeal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 200, display: "flex", alignItems: "flex-end" }} onClick={() => setShowCustomMeal(null)}>
+          <div style={{ background: T.surface, width: "100%", maxWidth: 430, margin: "0 auto", padding: "24px 20px 40px" }} onClick={e => e.stopPropagation()}>
+            <p style={s.labelCopper}>CREATE CUSTOM MEAL</p>
+            <p style={{ ...s.body, marginTop: 4, fontSize: 12 }}>{showCustomMeal.day}DAY — {showCustomMeal.slot.toUpperCase()}</p>
+            
+            <div style={{ marginTop: 16 }}>
+              <p style={{ ...s.label, fontSize: 9, marginBottom: 4 }}>MEAL NAME</p>
+              <input value={customMealInput.name} onChange={e => setCustomMealInput(p => ({...p, name: e.target.value}))} placeholder="e.g. Quinoa Salad Bowl" style={{ width: "100%", background: T.cardHigh, border: `1px solid ${T.label}33`, color: T.cream, fontFamily: font.body, fontSize: 14, padding: "10px 12px", outline: "none", boxSizing: "border-box", marginBottom: 12 }} />
+              
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                {[["kcal", "CALORIES"], ["protein", "PROTEIN (g)"], ["carbs", "CARBS (g)"], ["fat", "FAT (g)"]].map(([key, label]) => (
+                  <div key={key}>
+                    <p style={{ ...s.label, fontSize: 8, marginBottom: 4 }}>{label}</p>
+                    <input type="number" value={customMealInput[key]} onChange={e => setCustomMealInput(p => ({...p, [key]: e.target.value}))} placeholder="0" style={{ width: "100%", background: T.cardHigh, border: `1px solid ${T.label}33`, color: T.cream, fontFamily: font.head, fontSize: 16, padding: "8px 10px", outline: "none", boxSizing: "border-box" }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+              <button onClick={() => setShowCustomMeal(null)} style={{ ...s.btnSecondary, flex: 1 }}>CANCEL</button>
+              <button onClick={addCustomMealToLibrary} style={{ ...s.btn, flex: 2, opacity: customMealInput.name.trim() ? 1 : 0.4 }}>SAVE MEAL</button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1579,6 +1863,17 @@ const FuelScreen = () => {
                   </div>
                 );
               })}
+              {/* Create custom meal option */}
+              <div onClick={() => { setSwapSlot(null); setShowCustomMeal({ day: swapSlot.day, slot: swapSlot.slot }); }} style={{
+                border: `1px dashed ${T.teal}66`, padding: "14px 16px", marginBottom: 8, cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 12
+              }}>
+                <Icon name="plus" size={18} color={T.teal} />
+                <div>
+                  <h3 style={{ ...s.h3, fontSize: 14, color: T.teal }}>CREATE CUSTOM MEAL</h3>
+                  <p style={{ ...s.body, fontSize: 11, marginTop: 2 }}>Enter your own meal with macros</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1590,7 +1885,7 @@ const FuelScreen = () => {
 // ═══════════════════════════════════
 // SCREEN: INTEL (Progress)
 // ═══════════════════════════════════
-const IntelScreen = () => {
+const IntelScreen = ({ workoutLog }) => {
   const [tab, setTab] = useState("body");
   const weights = [78]; // Starting weight - will grow as you log weekly weigh-ins
   const maxW = Math.max(...weights);
@@ -1723,14 +2018,61 @@ const IntelScreen = () => {
 };
 
 // ═══════════════════════════════════
-// MAIN APP
+// MAIN APP — Centralized State
 // ═══════════════════════════════════
 export default function App() {
   const [screen, setScreen] = useState("command");
-  const [activeWorkout, setActiveWorkout] = useState(false);
+  const [activeWorkout, setActiveWorkout] = useState(null); // null or activity object
   const [googleConnected, setGoogleConnected] = useState(false);
   const [lastSync, setLastSync] = useState(null);
-  const [syncStatus, setSyncStatus] = useState("idle"); // idle, syncing, done
+  const [syncStatus, setSyncStatus] = useState("idle");
+
+  // ── Centralized schedule state (shared between screens) ──
+  const [schedule, setSchedule] = useState({ ...DEFAULT_SCHEDULE });
+
+  // ── Workout log (persists completed workouts) ──
+  const [workoutLog, setWorkoutLog] = useState([]); // [{date, day, activity, exercises, duration}]
+
+  // ── Nutrition log (tracks what's been eaten today) ──
+  const [todayMealLog, setTodayMealLog] = useState({ coffee: false, breakfast: false, lunch: false, postworkout: false, dinner: false, snack: false });
+
+  // ── Computed macros from meal log ──
+  const computeMacros = () => {
+    const allMeals = [...MEAL_LIBRARY.breakfast, ...MEAL_LIBRARY.lunch, ...MEAL_LIBRARY.dinner, ...MEAL_LIBRARY.fixed, ...MEAL_LIBRARY.snacks];
+    const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+    const dayKey = days[new Date().getDay()];
+    const todayPlan = DEFAULT_MEAL_PLAN[dayKey] || DEFAULT_MEAL_PLAN["MON"];
+    const fixedMeals = MEAL_LIBRARY.fixed;
+    
+    const mealSlots = [
+      { slot: "coffee", meal: fixedMeals[0] },
+      { slot: "breakfast", meal: allMeals.find(m => m.id === todayPlan?.breakfast) },
+      { slot: "lunch", meal: allMeals.find(m => m.id === todayPlan?.lunch) },
+      { slot: "postworkout", meal: fixedMeals[1] },
+      { slot: "dinner", meal: allMeals.find(m => m.id === todayPlan?.dinner) },
+      ...(todayPlan?.snack ? [{ slot: "snack", meal: allMeals.find(m => m.id === todayPlan.snack) }] : []),
+    ];
+    
+    let kcal = 0, protein = 0, carbs = 0, fat = 0;
+    mealSlots.forEach(({ slot, meal }) => {
+      if (todayMealLog[slot] && meal) {
+        kcal += meal.kcal || 0;
+        protein += meal.protein || 0;
+        carbs += meal.carbs || 0;
+        fat += meal.fat || 0;
+      }
+    });
+    return { calories: { current: kcal, target: 1900 }, protein: { current: protein, target: 145 }, carbs: { current: carbs, target: 185 }, fat: { current: fat, target: 60 } };
+  };
+
+  const macros = computeMacros();
+
+  // ── Today detection ──
+  const today = getTodayDayName();
+  const todayActivity = schedule[today] ? ACTIVITY_LIBRARY.find(a => a.id === schedule[today]) : null;
+
+  // ── Custom sports storage (lifted from WeeklyScreen for startWorkout access) ──
+  const [customSportsGlobal, setCustomSportsGlobal] = useState([]);
 
   // Auto-reset sync status
   useEffect(() => {
@@ -1740,13 +2082,33 @@ export default function App() {
     }
   }, [syncStatus]);
 
-  const startWorkout = () => setActiveWorkout(true);
-  const endWorkout = () => setActiveWorkout(false);
+  // ── Start any workout (pass the actual activity) ──
+  const startWorkout = (activityId) => {
+    const allActs = [...ACTIVITY_LIBRARY, ...customSportsGlobal];
+    const activity = activityId ? allActs.find(a => a.id === activityId) : todayActivity;
+    if (activity) {
+      setActiveWorkout(activity);
+    }
+  };
 
+  // ── End workout and save log ──
+  const endWorkout = (completedData) => {
+    if (completedData) {
+      setWorkoutLog(prev => [...prev, {
+        date: new Date().toISOString().split("T")[0],
+        day: today,
+        ...completedData,
+      }]);
+    }
+    setActiveWorkout(null);
+  };
+
+  // ── Active Workout Screen ──
   if (activeWorkout) {
     return (
       <div style={s.app}>
-        <WorkoutScreen onBack={endWorkout} />
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+        <WorkoutScreen activity={activeWorkout} onBack={() => setActiveWorkout(null)} onComplete={endWorkout} />
       </div>
     );
   }
@@ -1756,10 +2118,10 @@ export default function App() {
       <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
       
       <div style={{ paddingBottom: 60, minHeight: "calc(100vh - 60px)" }}>
-        {screen === "command" && <CommandScreen onStartWorkout={startWorkout} />}
-        {screen === "train" && <WeeklyScreen onStartWorkout={startWorkout} />}
-        {screen === "fuel" && <FuelScreen />}
-        {screen === "intel" && <IntelScreen />}
+        {screen === "command" && <CommandScreen onStartWorkout={() => startWorkout(schedule[today])} macros={macros} today={today} todayActivity={todayActivity} workoutLog={workoutLog} />}
+        {screen === "train" && <WeeklyScreen onStartWorkout={startWorkout} schedule={schedule} setSchedule={setSchedule} today={today} workoutLog={workoutLog} customSportsGlobal={customSportsGlobal} setCustomSportsGlobal={setCustomSportsGlobal} />}
+        {screen === "fuel" && <FuelScreen todayMealLog={todayMealLog} setTodayMealLog={setTodayMealLog} />}
+        {screen === "intel" && <IntelScreen workoutLog={workoutLog} />}
         {screen === "profile" && (
           <div style={{ padding: 20, paddingBottom: 80 }}>
             <p style={s.labelCopper}>OPERATIVE PROFILE</p>
