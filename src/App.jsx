@@ -462,7 +462,7 @@ const CommandScreen = ({ onStartWorkout, macros, today, todayActivity, workoutLo
             <p style={{ ...s.body, color: T.label }}>No activity assigned for today. Go to TRAIN to set one up.</p>
           </div>
         </div>
-      )}}
+      )}
     </div>
   );
 };
@@ -2107,7 +2107,6 @@ export default function App() {
   if (activeWorkout) {
     return (
       <div style={s.app}>
-        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
         <WorkoutScreen activity={activeWorkout} onBack={() => setActiveWorkout(null)} onComplete={endWorkout} />
       </div>
     );
@@ -2115,7 +2114,6 @@ export default function App() {
 
   return (
     <div style={s.app}>
-      <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
       
       <div style={{ paddingBottom: 60, minHeight: "calc(100vh - 60px)" }}>
         {screen === "command" && <CommandScreen onStartWorkout={() => startWorkout(schedule[today])} macros={macros} today={today} todayActivity={todayActivity} workoutLog={workoutLog} />}
